@@ -38,10 +38,10 @@ This repository contains the implementation of the first and second part of the 
    - Classification report for detailed performance analysis
    - Feature importance visualization
 
-## Part 2: Fairness Analyses
+## Part 2: Fairness Analysis
 ### Features
 1. **Original Model Fairness Analyses**
-   - Verifies two fairness metrics bases on the test dataset and the predicted label
+   - Verifies two fairness metrics based on the test dataset and the predicted label
    - Report findings of the two metrics
 
 2. **Fairness Technique to Ensure Fair Classifier**
@@ -54,7 +54,7 @@ This repository contains the implementation of the first and second part of the 
    - Classification report for detailed performance analysis
 
 4. **New Model Fairness Analyses**
-   - Verifies two fairness metrics bases on the test dataset and the new predicted label
+   - Verifies two fairness metrics based on the test dataset and the new predicted label
    - Report findings of the two metrics
    
 
@@ -104,10 +104,10 @@ python classifier.py
 ### Identified Issues
 1. **Class Imbalance**
    - Strong performance on Class 0, but poor recall for Class 1 (>50K)
-   - New model fails to effectively predict the minority class
+   - New model fails to predict the minority class effectively
 
 2. **Protected Attributes**
-   - Tried using both protected attributes to mitigate unfairness in the model, but the best performance was using only one attribute in the new model (sex)
+   - Tried using both protected attributes to mitigate unfairness in the model, but the best performance was using only one attribute in the new model (sex)
 
 
 ## Dependencies
