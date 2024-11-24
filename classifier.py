@@ -8,6 +8,12 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 import lightgbm as lgb
 from lightgbm import early_stopping, log_evaluation
+from aif360.metrics import ClassificationMetric
+from aif360.algorithms.inprocessing import AdversarialDebiasing
+from aif360.datasets import BinaryLabelDataset
+import tensorflow as tf
+ # Ensure TensorFlow compatibility with AIF360
+tf.compat.v1.disable_eager_execution()
 
 # Path Configuration
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -208,30 +214,16 @@ class AdultClassificationPipeline:
         """
         Evaluate model performance
         """
-        predictions = self.model.predict(X)
-        probabilities = self.model.predict_proba(X)[:, 1]
 
-        accuracy = accuracy_score(y, predictions)
-        precision = precision_score(y, predictions)
-        recall = recall_score(y, predictions)
-        f1 = f1_score(y, predictions)
-        roc_auc = roc_auc_score(y, probabilities)
-        
-        print(f"\n{dataset_name} Set Performance:")
-        print("-" * 50)
-        print(f"Accuracy: {accuracy_score(y, predictions):.4f}")
-        print(f"Precision: {precision:.4f}")
-        print(f"Recall: {recall:.4f}")
-        print(f"F1-score: {f1:.4f}")
-        print(f"ROC AUC: {roc_auc:.4f}")
-        print("\nClassification Report:")
-        print(classification_report(y, predictions))
+        predictions = self.model.predict(X)
+
+        self.evaluate_performance(y,predictions,dataset_name)
         
         # Plot feature importance
         if dataset_name == "Test":
             self.plot_feature_importance()
         
-        return predictions, probabilities
+        return predictions
     
     def plot_feature_importance(self):
         """
@@ -250,6 +242,76 @@ class AdultClassificationPipeline:
         plt.yticks(range(len(features)), features['Feature'])
         plt.tight_layout()
         plt.show()
+
+    def evaluate_fairness(self,test_data,predicted_dataset,privileged_groups,unprivileged_groups,label):
+        """
+        Evaluate fairnesse metrics based on the privileged groups, true label and the predicted label
+        """
+        # Evaluate fairness metrics
+        metric = ClassificationMetric(
+            test_data,
+            predicted_dataset,
+            unprivileged_groups=unprivileged_groups,
+            privileged_groups=privileged_groups
+        )
+        print(f"Disparate Impact {label}: {metric.disparate_impact()}")
+        print(f"Statistical Parity Difference {label}: {metric.statistical_parity_difference()}")
+
+
+    def evaluate_performance(self,y_true, y_pred,label):
+        """
+        Evaluate performance of a given model with multiple metrics
+        """
+        print(f"\n{label} Performance: ")
+        print("-" * 50)
+
+        # Calculate performance metrics
+        accuracy = accuracy_score(y_true, y_pred)
+        precision = precision_score(y_true, y_pred)
+        recall = recall_score(y_true, y_pred)
+        f1 = f1_score(y_true, y_pred)
+
+        # Print metrics
+        print(f"Accuracy: {accuracy:.4f}")
+        print(f"Precision: {precision:.4f}")
+        print(f"Recall: {recall:.4f}")
+        print(f"F1-score: {f1:.4f}")
+
+        # Print classification report
+        print("\nClassification Report:")
+        print(classification_report(y_true, y_pred))
+
+        # Return a dictionary of performance metrics
+        performance_metrics = {
+            "accuracy": accuracy,
+            "precision": precision,
+            "recall": recall,
+            "f1_score": f1,
+        }
+        return performance_metrics
+    
+    def adversarial_debiasing(self,train_data,test_data,privileged_groups,unprivileged_groups):
+        """
+        Evaluate performance of a given model with multiple metrics
+        """
+        debiased_model = AdversarialDebiasing(
+            privileged_groups=privileged_groups,
+            unprivileged_groups=unprivileged_groups,
+            scope_name='adversarial_debiasing',
+            debias=True,  # Enable debiasing
+            sess=tf.compat.v1.Session()
+        )
+
+        # Train the model
+        debiased_model.fit(train_data)
+
+        # Evaluate on test data
+        predicted_test_dataset = debiased_model.predict(test_data)
+
+        # Convert AIF360 dataset back to numpy arrays for performance metrics
+        y_pred_adversarial_debiasing = predicted_test_dataset.labels.flatten()
+
+        return y_pred_adversarial_debiasing,predicted_test_dataset
 
 def main():
     """
@@ -277,14 +339,42 @@ def main():
     # Prepare data
     print("\nPreparing features...")
     X_train, X_val, X_test, y_train, y_val, y_test = pipeline.prepare_data()
-    
+
     # Train model
     pipeline.train_model(X_train, X_val, y_train, y_val)
     
     # Evaluate model
     pipeline.evaluate_model(X_val, y_val, "Validation")
-    pipeline.evaluate_model(X_test, y_test, "Test")
-    
+    y_pred = pipeline.evaluate_model(X_test, y_test, "Test")
+
+
+    print("\nEvaluating fairness...")
+    # Convert the data into a BinaryLabelDataset (AIF360 format)
+    train_data = BinaryLabelDataset(df=pd.concat([X_train, y_train], axis=1), label_names=['income_class'], protected_attribute_names=['sex_Male', 'age_binary'])
+    test_data = BinaryLabelDataset(df=pd.concat([X_test, y_test], axis=1), label_names=['income_class'], protected_attribute_names=['sex_Male', 'age_binary'])
+
+    # Define privileged and unprivileged groups (AIF360)
+    privileged_groups = [{'sex_Male': 1}]
+    unprivileged_groups = [{'sex_Male': 0}]
+
+    # Use the same features and protected attributes from test_data (AIF360)
+    predicted_dataset = test_data.copy(deepcopy=True)
+
+    # Replace the labels with the predicted values (AIF360)
+    predicted_dataset.labels = y_pred.reshape(-1, 1)  # Ensure y_pred has the correct shape
+
+    # Evaluate fairness for original model
+    pipeline.evaluate_fairness(test_data,predicted_dataset,privileged_groups,unprivileged_groups,'before adversarial debiasing')
+
+
+    print("\nDebiasing Model...")
+    # Adversarial loss function that penalizes the model if it uses sensitive features (sex) to make predictions
+    y_pred_adversarial_debiasing,predicted_test_dataset = pipeline.adversarial_debiasing(train_data,test_data,privileged_groups,unprivileged_groups)
+    # Evaluate new model
+    pipeline.evaluate_performance(y_test,y_pred_adversarial_debiasing,"Test - Adversarial Debiasing")
+    # Evaluate fairness for new model
+    pipeline.evaluate_fairness(test_data,predicted_test_dataset,privileged_groups,unprivileged_groups,'after adversarial debiasing')
+
     return pipeline
 
 if __name__ == "__main__":
