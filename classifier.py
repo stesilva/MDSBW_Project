@@ -12,6 +12,7 @@ from aif360.metrics import ClassificationMetric
 from aif360.algorithms.inprocessing import AdversarialDebiasing
 from aif360.datasets import BinaryLabelDataset
 import tensorflow as tf
+
  # Ensure TensorFlow compatibility with AIF360
 tf.compat.v1.disable_eager_execution()
 
@@ -155,23 +156,19 @@ class AdultClassificationPipeline:
         Prepare train, validation and test data
         """
         # Prepare features
-        X_full = self.preprocess_features(self.train_data)
-        y_full = self.train_data['income_class']
+        X_train_full = self.preprocess_features(self.train_data)
+        y_train_full = self.train_data['income_class']
         
-        # First split: separate test set
-        X_temp, X_test, y_temp, y_test = train_test_split(
-            X_full, y_full, 
-            test_size=0.2, 
-            random_state=42,
-            stratify=y_full  # Ensure balanced splits
-        )
+        # Use the original test_data for testing
+        X_test = self.preprocess_features(self.test_data)
+        y_test = self.test_data['income_class']
         
-        # Second split: create validation set from remaining data
+        # Split train data into train and validation
         X_train, X_val, y_train, y_val = train_test_split(
-            X_temp, y_temp,
+            X_train_full, y_train_full,
             test_size=0.25,
             random_state=42,
-            stratify=y_temp  # Ensure balanced splits
+            stratify=y_train_full
         )
         
         print("\nData split sizes:")
