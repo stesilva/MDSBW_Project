@@ -103,15 +103,13 @@ def clean_dataset(data):
     return data
 
 class AdultClassificationPipeline:
-    def __init__(self, train_data, test_data):
+    def __init__(self, full_data):
         """
         Initialize classification pipeline
         Args:
-            train_data: Training dataset
-            test_data: Test dataset
+            full_data: Complete dataset
         """
-        self.train_data = train_data
-        self.test_data = test_data
+        self.full_data = full_data
         self.model = None
         self.scaler = StandardScaler()
         self.feature_names = None
@@ -125,10 +123,10 @@ class AdultClassificationPipeline:
         """
         df = df.copy()
         
-        # 1. Binarize age feature
+        # 1. Binarize age feature (available for other project parts)
         age_median = df['age'].median()
         df['age_binary'] = (df['age'] > age_median).astype(int)
-        df = df.drop('age', axis=1)  # Remove original age column
+        df = df.drop('age', axis=1) # Remove original age column
         
         # 2. Feature splitting
         numeric_features = ['education_num', 'capital_gain', 'capital_loss', 'hours_per_week']
@@ -153,22 +151,27 @@ class AdultClassificationPipeline:
     
     def prepare_data(self):
         """
-        Prepare train, validation and test data
+        Prepare and split data after preprocessing
         """
-        # Prepare features
-        X_train_full = self.preprocess_features(self.train_data)
-        y_train_full = self.train_data['income_class']
+        # First preprocess all data
+        X_full = self.preprocess_features(self.full_data)
+        y_full = self.full_data['income_class']
         
-        # Use the original test_data for testing
-        X_test = self.preprocess_features(self.test_data)
-        y_test = self.test_data['income_class']
-        
-        # Split train data into train and validation
+        # Now split into train/val/test
+        # First split: separate test set
+        X_temp, X_test, y_temp, y_test = train_test_split(
+            X_full, y_full, 
+            test_size=0.2,
+            random_state=42,
+            stratify=y_full
+        )
+
+        # Second split: create validation set
         X_train, X_val, y_train, y_val = train_test_split(
-            X_train_full, y_train_full,
+            X_temp, y_temp,
             test_size=0.25,
             random_state=42,
-            stratify=y_train_full
+            stratify=y_temp
         )
         
         print("\nData split sizes:")
@@ -321,19 +324,10 @@ def main():
     full_data = read_dataset()
     cleaned_data = clean_dataset(full_data)
     
-    # Split into train and test
-    print("\nSplitting into train and test sets...")
-    train_data, test_data = train_test_split(
-        cleaned_data, 
-        test_size=0.2, 
-        random_state=42,
-        stratify=cleaned_data['income_class']  # Ensure balanced splits
-    )
+    # Initialize pipeline with full dataset
+    pipeline = AdultClassificationPipeline(cleaned_data)
     
-    # Initialize pipeline
-    pipeline = AdultClassificationPipeline(train_data, test_data)
-    
-    # Prepare data
+    # Get splits into train, test and validation data
     print("\nPreparing features...")
     X_train, X_val, X_test, y_train, y_val, y_test = pipeline.prepare_data()
 
@@ -343,7 +337,6 @@ def main():
     # Evaluate model
     pipeline.evaluate_model(X_val, y_val, "Validation")
     y_pred = pipeline.evaluate_model(X_test, y_test, "Test")
-
 
     print("\nEvaluating fairness...")
     # Convert the data into a BinaryLabelDataset (AIF360 format)
