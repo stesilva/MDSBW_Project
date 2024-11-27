@@ -56,7 +56,26 @@ This repository contains the implementation of the first and second part of the 
 4. **New Model Fairness Analyses**
    - Verifies two fairness metrics based on the test dataset and the new predicted label
    - Report findings of the two metrics
-   
+     
+## Part 3: Privacy Analysis
+### Features
+1. **Assessing the Current State of Sensitive Attributes**
+   - Extract the preprocessed data on attributes Age and Sex
+   - Compute the cross-tabulation
+
+2. **Applying Local Differential Privacy Technique**
+   - Apply local differential privacy using randomised response
+   - Select the most appropriate values for truth probabilities
+   - Create a private dataset
+
+3. **Dataset Comparison**
+   - Compute cross-tabulation for private dataset
+   - Calculate the absolute and relative errors in comparison with the original dataset
+
+4. **New Model Evaluation**
+   - Split the private dataset as in Part 1
+   - Train and evaluate the same model with private data
+   - Report findings   
 
 ### Usage
 ```python
@@ -109,6 +128,24 @@ python classifier.py
 2. **Protected Attributes**
    - Tried using both protected attributes to mitigate unfairness in the model, but the best performance was using only one attribute in the new model (sex)
 
+
+## Part 3: Privacy Classification Implementation
+### Performance Metrics
+- Accuracy: ~0.82
+- Significant disparity between classes holds:
+  - Class 0 (≤50K): Precision: 0.95, Recall: 0.81
+  - Class 1 (>50K): 0.59, Recall: 0.87
+
+### Local Differential Privacy Metrics
+   - Randomised Response on Age:
+      - Since the data is equally distributed, the values of p and q were chosen to be equal. Namely, p=q=0.95
+   - Randomised Response on Sex:
+      - Since the data is skewed towards male population (proporion of females ~34%), q (probability of reporting sex=Female) was chosen to be lower than p to introduce higher privacy to the less common data.
+   - Overall, pretty high values of p and q were introduced in both attributes in order not to deviate from the original proportions of data. This was the result of analysing the cross-tabulation of original and private datasets and relative errors.
+
+### Model Performance
+- As a result, the accuracy was not much affected (0.82 compared to 0.83 in the original classifier).
+- Although, it should be noted that even with the introduction of lower probabilities p and q, similar results were obtained, i.e. low impact on model performance. This could be explained by age and sex attributes being not of that high importance as features.
 
 ## Dependencies
 - Python 3.x
