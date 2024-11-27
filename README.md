@@ -141,7 +141,7 @@ python classifier.py
       - Since the data is equally distributed, the values of p and q were chosen to be equal. Namely, p=q=0.95
    - Randomised Response on Sex:
       - Since the data is skewed towards male population (proporion of females ~34%), q (probability of reporting sex=Female) was chosen to be lower than p to introduce higher privacy to the less common data.
-   - Overall, pretty high values of p and q were introduced in both attributes in order not to deviate from the original proportions of data. This was the result of analysing the cross-tabulation of original and private datasets and relative errors.
+   - Overall, pretty high values of p and q were introduced (with epsilon ~3) in both attributes in order not to deviate from the original proportions of data. This was the result of analysing the cross-tabulation of original and private datasets and relative errors.
 
 ### Model Performance
 - As a result, the accuracy was not much affected (0.82 compared to 0.83 in the original classifier).
