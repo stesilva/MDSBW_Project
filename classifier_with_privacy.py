@@ -489,11 +489,11 @@ def main():
 
     print("\nDebiasing Model...")
     # Adversarial loss function that penalizes the model if it uses sensitive features (sex) to make predictions
-    #y_pred_adversarial_debiasing,predicted_test_dataset = pipeline.adversarial_debiasing(train_data,test_data,privileged_groups,unprivileged_groups)
+    y_pred_adversarial_debiasing,predicted_test_dataset = pipeline.adversarial_debiasing(train_data,test_data,privileged_groups,unprivileged_groups)
     # Evaluate new model
-    #pipeline.evaluate_performance(y_test,y_pred_adversarial_debiasing,"Test - Adversarial Debiasing")
+    pipeline.evaluate_performance(y_test,y_pred_adversarial_debiasing,"Test - Adversarial Debiasing")
     # Evaluate fairness for new model
-    #pipeline.evaluate_fairness(test_data,predicted_test_dataset,privileged_groups,unprivileged_groups,'after adversarial debiasing')
+    pipeline.evaluate_fairness(test_data,predicted_test_dataset,privileged_groups,unprivileged_groups,'after adversarial debiasing')
 
     print("\nCreating Private Dataset")
     pipeline_2=PrivateDatasetPipeline(processed_dataset)
