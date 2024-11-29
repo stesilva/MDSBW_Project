@@ -77,7 +77,23 @@ This repository contains the implementation of the first and second part of the 
    - Train and evaluate the same model with private data
    - Report findings   
 
-### Usage
+## Part 5: Explainability
+### Features
+1. **Confidence Assessment**
+   - analyze_predictions method for confidence scoring
+   - Wrong but confident prediction identification and filtering
+
+2. **Privacy Impact Analysis**
+   - analyze_privacy_impact method for tracking attribute changes
+   - Focus on sensitive attributes (Age and Sex)
+   - Focus on wrong but confident predictions
+
+3. **Visualization Suite**
+   - plot_confidence_distribution for confidence analysis
+   - plot_feature_importance for feature ranking
+   - plot_feature_divergence for error pattern analysis
+
+## Usage
 ```python
 # Run the classification pipeline
 python classifier.py
@@ -140,6 +156,46 @@ python classifier.py
 ### Model Performance
 - As a result, the accuracy was not much affected (0.82 compared to 0.83 in the original classifier).
 - Although, it should be noted that even with the introduction of lower probabilities p and q, similar results were obtained, i.e. low impact on model performance. This could be explained by age and sex attributes being not of that high importance as features.
+
+## Part 5: Explainability
+### Model Confidence Analysis
+- Total prediction errors: 1,528 instances
+- High confidence errors: 382 instances (25% of total errors)
+  - These are cases where the model was wrong but highly confident in its predictions
+
+![Confidence Distribution](assets/confidence_distribution.png)
+
+*Figure 1: Distribution of model confidence for correct and wrong predictions. The red dashed line indicates the threshold for high confidence.*
+
+### Privacy Impact Analysis
+The analysis of wrong but highly confident predictions reveals:
+- Age attribute was changed in 11.78% of cases
+- Sex attribute was changed in 9.16% of cases
+
+### Feature Importance Analysis
+#### Top Feature Importance
+![Feature Importance](assets/feature_importance.png)
+
+*Figure 2: Top 10 most important features in the model's decision making.*
+
+#### Most Divergent Features
+![Feature Divergence](assets/feature_divergence.png)
+
+*Figure 3: Features showing the highest divergence in wrong but confident predictions.*
+
+### Key Findings
+1. **Privacy Impact**: 
+   - The similar rates between privacy noise (10%) and attribute changes in wrong predictions (11.78% for Age, 9.16% for Sex) suggest that privacy protection is not a significant factor in model errors
+   - This indicates that the model's mistakes are not primarily due to the privacy-preserving modifications
+
+2. **Feature Importance**: 
+   - Work-related features (hours_per_week) and education level are the most influential globally
+   - Education level shows the highest divergence in wrong predictions, suggesting it might be a key factor in model mistakes
+
+3. **Recommendations**:
+   - Focus on improving the model's handling of education-related features, as they show both high importance and high divergence in error cases
+   - The privacy mechanism appears to be working as intended, with minimal impact on model decisions
+
 
 ## Dependencies
 - Python 3.x
