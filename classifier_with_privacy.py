@@ -470,13 +470,20 @@ def main():
     y_pred = pipeline.evaluate_model(X_test, y_test, "Test")
 
     print("\nEvaluating fairness...")
-    # Convert the data into a BinaryLabelDataset (AIF360 format)
-    train_data = BinaryLabelDataset(df=pd.concat([X_train, y_train], axis=1), label_names=['income_class'], protected_attribute_names=['sex_Male', 'age_binary'])
-    test_data = BinaryLabelDataset(df=pd.concat([X_test, y_test], axis=1), label_names=['income_class'], protected_attribute_names=['sex_Male', 'age_binary'])
 
-    # Define privileged and unprivileged groups (AIF360)
-    privileged_groups = [{'sex_Male': 1}]
-    unprivileged_groups = [{'sex_Male': 0}]
+    # Create a combined binary column: 1 for privileged, 0 for unprivileged
+    X_train['combined_privileged_group'] = (X_train['sex_Male'] == 1) & (X_train['age_binary'] == 1)
+    X_train['combined_privileged_group'] = X_train['combined_privileged_group'].astype(int)  # Convert to binary
+
+    X_test['combined_privileged_group'] = (X_test['sex_Male'] == 1) & (X_test['age_binary'] == 1)
+    X_test['combined_privileged_group'] = X_test['combined_privileged_group'].astype(int)  # Convert to binary
+
+    # Privileged and unprivileged groups
+    privileged_groups = [{'combined_privileged_group': 1}]
+    unprivileged_groups = [{'combined_privileged_group': 0}]
+
+    train_data = BinaryLabelDataset(df=pd.concat([X_train, y_train], axis=1), label_names=['income_class'], protected_attribute_names=['combined_privileged_group'])
+    test_data = BinaryLabelDataset(df=pd.concat([X_test, y_test], axis=1), label_names=['income_class'], protected_attribute_names=['combined_privileged_group'])
 
     # Use the same features and protected attributes from test_data (AIF360)
     predicted_dataset = test_data.copy(deepcopy=True)

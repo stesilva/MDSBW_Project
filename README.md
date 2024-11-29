@@ -47,7 +47,7 @@ This repository contains the implementation of the first and second part of the 
 2. **Fairness Technique to Ensure Fair Classifier**
    - Adversarial Debiasing (make the model less reliant on sensitive features)
    - Main Network (Predictor): A standard model (e.g., logistic regression, neural network)
-   - Adversarial Network: A separate network is introduced to predict the sensitive feature (sex)
+   - Adversarial Network: A separate network is introduced to predict the sensitive feature (sex and age)
 
 3. **New Model Evaluation**
    - Multiple evaluation metrics (Accuracy, Precision, Recall, F1-score)
@@ -107,26 +107,23 @@ python classifier.py
 
 ## Part 2: Fair Classification Implementation
 ### Performance Metrics
-- Accuracy: ~0.84
+- Accuracy: ~0.82
 - Significant disparity between classes:
-  - Class 0 (≤50K): Precision: 0.85, Recall: 0.96
-  - Class 1 (>50K): 0.78, Recall: 0.47
+  - Class 0 (≤50K): Precision: 0.84, Recall: 0.94
+  - Class 1 (>50K): 0.71, Recall: 0.47
 
 ### Fairness Metrics
-   - Disparate Impact (Focuses on the relative rate of positive outcomes between groups, aiming for a ratio close to 1 to indicate fairness): 
-      - Before Adversarial Debiasing: 0.30 (indicating significant bias against the protected group)
-      - After Adversarial Debiasing: 0.81 (showing a much more balanced result, closer to fairness)
-   - Statistical Parity Difference (Focuses on the absolute difference between the groups’ probabilities of receiving a positive outcome, aiming for a value close to 0 to indicate fairness): 
-      - Before Adversarial Debiasing: -0.31 (suggesting a strong imbalance in outcomes between the groups)
-      - After Adversarial Debiasing: -0.03 (a much smaller disparity, indicating a more fair model)
+   - Disparate Impact -> Measures the relative rate of positive outcomes between privileged and unprivileged groups. A value close to 1 indicates fairness
+      - Before Adversarial Debiasing: 0.35, indicating significant bias against the unprivileged group
+      - After Adversarial Debiasing: 0.99, demonstrating a much more balanced outcome and improved fairness
+   - Statistical Parity Difference -> Measures the absolute difference in probabilities of receiving a positive outcome between privileged and unprivileged groups. A value close to 0 indicates fairness
+      - Before Adversarial Debiasing: -0.40, suggesting a strong imbalance in outcomes between the groups
+      - After Adversarial Debiasing: -0.001, showing a minimal disparity and a significantly fairer model.
 
 ### Identified Issues
 1. **Class Imbalance**
    - Strong performance on Class 0, but poor recall for Class 1 (>50K)
    - New model fails to predict the minority class effectively
-
-2. **Protected Attributes**
-   - Tried using both protected attributes to mitigate unfairness in the model, but the best performance was using only one attribute in the new model (sex)
 
 
 ## Part 3: Privacy Classification Implementation
