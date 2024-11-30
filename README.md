@@ -166,6 +166,13 @@ python classifier.py
 - As a result, the accuracy was not much affected (0.82 compared to 0.83 in the original classifier).
 - Although, it should be noted that even with the introduction of lower probabilities p and q, similar results were obtained, i.e. low impact on model performance. This could be explained by age and sex attributes being not of that high importance as features.
 
+
+## Part 4: Privacy and Fairness
+### Fairness Metrics using real values of Age and Sex 
+- Disparate Impact ~ 0.6
+- Statistical Parity Difference ~ -0.1
+- Comparing to the Fair classifier, which had Statistical Parity Difference closer to 0 and Disparate Impact closer to 1, the private+fair classifier is less fair towards the unprivileged group. That is because the applied fairness method tries to ensure a fair classifier on the used data, which is already randomized using Local Differential Privacy. Therefore, any resulted unfainress would be proportional to the introduced anonymity in the data.
+
 ## Part 5: Explainability
 ### Model Confidence Analysis
 - Total prediction errors: 1,528 instances
