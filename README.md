@@ -75,7 +75,16 @@ This repository contains the implementation of the first and second part of the 
 4. **New Model Evaluation**
    - Split the private dataset as in Part 1
    - Train and evaluate the same model with private data
-   - Report findings   
+   - Report findings
+  
+## Part 4: Privacy and Fairness
+### Features
+1. Evaluate Fairness of the private classifier implemented in part 3
+   - Calculate the same two metrics used in part 1
+2. Apply Adversarial Debiasing (same fairness mitigation method)
+3. Evaluate Performance of the model
+4. Evaluate Fairness
+   - Once using the private features, and once using the true features (Assuming I am an auditor that has access to the real sensitive values)
 
 ## Part 5: Explainability
 ### Features
