@@ -171,6 +171,7 @@ python classifier.py
 ### Fairness Metrics using real values of Age and Sex 
 - Disparate Impact ~ 0.6
 - Statistical Parity Difference ~ -0.1
+  
 - Comparing to the Fair classifier, which had Statistical Parity Difference closer to 0 and Disparate Impact closer to 1, the private+fair classifier is less fair towards the unprivileged group. That is because the applied fairness method tries to ensure a fair classifier on the used data, which is already randomized using Local Differential Privacy. Therefore, any resulted unfainress would be proportional to the introduced anonymity in the data.
 
 ## Part 5: Explainability
