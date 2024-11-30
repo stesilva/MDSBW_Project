@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from classifier_with_privacy import AdultClassificationPipeline, PrivateDatasetPipeline, read_dataset, clean_dataset
+from classifier_with_privacy_fairness import AdultClassificationPipeline, PrivateDatasetPipeline, read_dataset, clean_dataset
 
 class PrivacyExplainabilityAnalysis:
     def __init__(self, original_pipeline, private_data, model):

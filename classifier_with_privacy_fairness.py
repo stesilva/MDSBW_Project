@@ -252,8 +252,8 @@ class AdultClassificationPipeline:
         self.evaluate_performance(y,predictions,dataset_name)
         
         # Plot feature importance
-        if dataset_name == "Test":
-            self.plot_feature_importance()
+        # if dataset_name == "Test":
+        #     self.plot_feature_importance()
         
         return predictions
     
@@ -325,6 +325,8 @@ class AdultClassificationPipeline:
         """
         Evaluate performance of a given model with multiple metrics
         """
+        tf.compat.v1.reset_default_graph()
+
         debiased_model = AdversarialDebiasing(
             privileged_groups=privileged_groups,
             unprivileged_groups=unprivileged_groups,
@@ -469,6 +471,9 @@ def main():
     pipeline.evaluate_model(X_val, y_val, "Validation")
     y_pred = pipeline.evaluate_model(X_test, y_test, "Test")
 
+
+
+
     print("\nEvaluating fairness...")
 
     # Create a combined binary column: 1 for privileged, 0 for unprivileged
@@ -502,6 +507,9 @@ def main():
     # Evaluate fairness for new model
     pipeline.evaluate_fairness(test_data,predicted_test_dataset,privileged_groups,unprivileged_groups,'after adversarial debiasing')
 
+
+
+
     print("\nCreating Private Dataset")
     pipeline_2=PrivateDatasetPipeline(processed_dataset)
     private_dataset=pipeline_2.create_private_dataset()
@@ -523,13 +531,53 @@ def main():
     pipeline_2.calculate_errors(cross_tab_original, cross_tab_private)
 
     print("\nPrivate Classification")
-    X_train, X_val, X_test, y_train, y_val, y_test=pipeline_2.split_data(private_dataset)
+    X_train_priv, X_val_priv, X_test_priv, y_train_priv, y_val_priv, y_test_priv=pipeline_2.split_data(private_dataset)
     private_classification=AdultClassificationPipeline(private_dataset)
     # Train model
-    private_classification.train_model(X_train, X_val, y_train, y_val)
+    private_classification.train_model(X_train_priv, X_val_priv, y_train_priv, y_val_priv)
     # Evaluate model
-    private_classification.evaluate_model(X_val, y_val, "Validation")
-    y_pred = private_classification.evaluate_model(X_test, y_test, "Test")
+    private_classification.evaluate_model(X_val_priv, y_val_priv, "Validation")
+    y_pred_priv = private_classification.evaluate_model(X_test_priv, y_test_priv, "Test")
+
+
+
+    ## private+fair classifier
+    print("\nPrivate+Fair Classifier")
+
+
+    # Create a combined binary column: 1 for privileged, 0 for unprivileged
+    X_train_priv['combined_privileged_group'] = (X_train_priv['sex_Male'] == 1) & (X_train_priv['age_binary'] == 1)
+    X_train_priv['combined_privileged_group'] = X_train_priv['combined_privileged_group'].astype(int)  # Convert to binary
+
+    X_test_priv['combined_privileged_group'] = (X_test_priv['sex_Male'] == 1) & (X_test_priv['age_binary'] == 1)
+    X_test_priv['combined_privileged_group'] = X_test_priv['combined_privileged_group'].astype(int)  # Convert to binary
+
+    privileged_groups = [{'combined_privileged_group': 1}]
+    unprivileged_groups = [{'combined_privileged_group': 0}]
+
+    train_data_priv = BinaryLabelDataset(df=pd.concat([X_train_priv, y_train_priv], axis=1), label_names=['income_class'], protected_attribute_names=['combined_privileged_group'])
+    test_data_priv = BinaryLabelDataset(df=pd.concat([X_test_priv, y_test_priv], axis=1), label_names=['income_class'], protected_attribute_names=['combined_privileged_group'])
+
+    predicted_dataset_priv = test_data_priv.copy(deepcopy=True)
+    predicted_dataset_priv.labels = y_pred_priv.reshape(-1, 1)  # Ensure y_pred has the correct shape
+
+    pipeline.evaluate_fairness(test_data_priv,predicted_dataset_priv,privileged_groups,unprivileged_groups,'before adversarial debiasing of Private Classifier')
+
+
+    print("\nDebiasing Model of Private Classifier...")
+
+    y_pred_adversarial_debiasing_priv,predicted_test_dataset_priv = private_classification.adversarial_debiasing(train_data_priv,test_data_priv,privileged_groups,unprivileged_groups)
+    # Evaluate new model
+    private_classification.evaluate_performance(y_test_priv,y_pred_adversarial_debiasing_priv,"Test - Adversarial Debiasing of Private Classifier")
+    # Evaluate fairness for new model
+    private_classification.evaluate_fairness(test_data_priv,predicted_test_dataset_priv,privileged_groups,unprivileged_groups,'after adversarial debiasing of Private Classifier - using private attributes')
+
+    # Assume, you’re an auditor that has access to the real sensitive values of Age and Sex. Using the real values of Age and Sex, measure the fairness of the private+fair classifier
+
+    priv_fair_predicted_dataset = test_data.copy(deepcopy=True)
+    priv_fair_predicted_dataset.labels = y_pred_adversarial_debiasing_priv.reshape(-1, 1)  # Ensure y_pred has the correct shape
+
+    private_classification.evaluate_fairness(test_data,priv_fair_predicted_dataset,privileged_groups,unprivileged_groups,'after adversarial debiasing of Private Classifier - using true value attributes')
 
 
 # In[21]:
