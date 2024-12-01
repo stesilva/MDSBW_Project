@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import requests
 from classifier_with_privacy_fairness import AdultClassificationPipeline, PrivateDatasetPipeline, read_dataset, clean_dataset
+import shap
 
 class PrivacyExplainabilityAnalysis:
     def __init__(self, original_pipeline, private_data, model):
@@ -16,6 +18,44 @@ class PrivacyExplainabilityAnalysis:
         self.original_pipeline = original_pipeline
         self.private_data = private_data
         self.model = model
+        
+        # Initialize the SHAP explainer for tree-based models (e.g., RandomForest, XGBoost, etc.)
+        self.explainer = shap.TreeExplainer(self.model)
+
+
+    def get_natural_language_explanation(self, prompt):
+        """
+        Call the LLM API to get a natural language explanation based on the prompt.
+        """
+        url = "http://127.0.0.1:1234/v1/completions" # Corrected API endpoint
+        headers = {"Content-Type": "application/json"}
+        data = {
+            "model": "llama-3.2-1b-instruct",  # The model you specified
+            "prompt": prompt,
+  # The text you want to transform into human-readable explanation
+            "max_tokens": 500,  # Limit to response length
+            "temperature": 0.7  # Control creativity of response (0.7 is balanced)
+        }
+
+        try:
+            response = requests.post(url, json=data, headers=headers)
+            response.raise_for_status()  # Raise an error for bad status codes
+            response_data = response.json()  # Get the response as a dictionary
+
+            # Check if 'choices' key exists in the response
+            if "choices" in response_data:
+                return response_data["choices"][0]["text"].strip()  # Get the explanation text
+            else:
+                print(f"Unexpected response structure: {response_data}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"Error calling LLM API: {e}")
+            return None
+        except ValueError as e:
+            print(f"Error parsing JSON response: {e}")
+            return None
+
+  
 
     def analyze_predictions(self, X_test, y_true):
         """
@@ -99,7 +139,38 @@ class PrivacyExplainabilityAnalysis:
         plt.savefig('assets/feature_divergence.png')
         plt.close()
 
-    def analyze_and_explain(self, X_test, y_true):
+    def generate_natural_language_explanation(self, shap_values, top_n=5):
+        """
+        Generate a natural language explanation based on SHAP values, showing only the highest contributions.
+        
+        Args:
+            shap_values: SHAP values for a given instance.
+            top_n: Number of top features to display based on their contribution (default is 5).
+        """
+        # Get the features and their SHAP values
+        feature_contributions = list(zip(shap_values.feature_names, shap_values.values))
+        
+        # Sort the contributions by absolute value, descending
+        sorted_contributions = sorted(feature_contributions, key=lambda x: abs(x[1]), reverse=True)
+        
+        # Select top N features with the highest contributions
+        top_contributions = sorted_contributions[:top_n]
+        
+        # Create the explanation text, including only the highest contributions
+        explanation = f"Based on the model's analysis, the features that had the most impact on the prediction were as follows:\n"
+        for feature, contribution in top_contributions:
+            explanation += f"- {feature}: {contribution:.4f} contribution\n"
+        
+        # Prepare the prompt to pass to the LLM for natural language explanation
+        prompt = (f"Explain the model's prediction for the chosen instance in simple terms, "
+                f"highlighting the most important features and their contributions:\n{explanation}")
+        
+        # Call the LLM API to generate the natural language explanation
+        natural_language_explanation = self.get_natural_language_explanation(prompt)
+        
+        return natural_language_explanation
+
+    def analyze_and_explain(self, X_test, y_true, instance_idx):
         """
         Comprehensive analysis of model behavior and privacy impact
         """
@@ -120,6 +191,10 @@ class PrivacyExplainabilityAnalysis:
         feature_divergence = abs(error_stats.loc['mean'] - correct_stats.loc['mean'])
         divergent_features = feature_divergence.nlargest(5)
         
+        # Generate an explanation for a specific instance using SHAP values
+        shap_values = self.explainer(X_test.iloc[instance_idx:instance_idx+1])
+        natural_language_explanation = self.generate_natural_language_explanation(shap_values[0])
+
         analysis_results = {
             'feature_importance': feature_importance.set_index('feature')['importance'].to_dict(),
             'divergent_features': divergent_features.to_dict(),
@@ -128,7 +203,8 @@ class PrivacyExplainabilityAnalysis:
             'privacy_changes': {
                 'age': privacy_impact['age_binary_changed'].mean(),
                 'sex': privacy_impact['sex_Male_changed'].mean()
-            }
+            },
+            'explanation': natural_language_explanation
         }
         
         self.plot_confidence_distribution(results)
@@ -157,6 +233,9 @@ class PrivacyExplainabilityAnalysis:
         print("\nMost Divergent Features in Wrong but Highly Confident Instances:")
         for feature, score in analysis_results['divergent_features'].items():
             print(f"  {feature:<30} {score:.3f}")
+        
+        print("\nNatural Language Explanation for Instance 0:")
+        print(analysis_results['explanation'])
 
 def main():
     # Load and prepare data
@@ -177,7 +256,11 @@ def main():
     
     # Run analysis
     explainability = PrivacyExplainabilityAnalysis(pipeline, private_data, private_classification.model)
-    analysis_results = explainability.analyze_and_explain(X_test, y_test)
+    
+    # Provide the index of the instance you want to analyze, e.g., instance 0
+    instance_idx = 0  # Example, you can choose a different index from X_test
+    
+    analysis_results = explainability.analyze_and_explain(X_test, y_test, instance_idx)
     explainability.print_analysis(analysis_results)
 
 if __name__ == "__main__":
