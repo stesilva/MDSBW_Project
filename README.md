@@ -215,17 +215,17 @@ The analysis of wrong but highly confident predictions reveals:
    - 
 ## Part 6: Explainability and LLM
  - Generate a natural language explanation based on SHAP values, showing only the highest contributions.
- - 
+   
 ### Features
 1. **SHAP for Model Explainability**
    - Integrated SHAP (SHapley Additive exPlanations) to provide detailed insights into feature contributions to model predictions. SHAP values are computed to identify the contribution of each feature, offering an additive decomposition that aids in explaining complex model behavior.
-   - 
+     
 2. **LLM Studio Integration**
    - Used LLM Studio to expose an API that generates natural language explanations of model predictions. The API utilizes the llama-3.2-1b-instruct model, fine-tuned for instruction-following tasks, to convert numeric SHAP values into coherent textual summaries that are understandable by non-experts.
 
 3. **VSCode API Integration**
    - The generated API is integrated into VSCode, to access natural language explanations directly from the development environment.
-   - 
+     
  ## Example output
 
 Natural Language Explanation for Instance 0:
