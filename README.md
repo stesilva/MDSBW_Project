@@ -212,8 +212,50 @@ The analysis of wrong but highly confident predictions reveals:
 3. **Recommendations**:
    - Focus on improving the model's handling of education-related features, as they show both high importance and high divergence in error cases
    - The privacy mechanism appears to be working as intended, with minimal impact on model decisions
+   - 
+## Part 6: Explainability and LLM
+ - Generate a natural language explanation based on SHAP values, showing only the highest contributions.
+ - 
+### Features
+1. **SHAP for Model Explainability**
+   - Integrated SHAP (SHapley Additive exPlanations) to provide detailed insights into feature contributions to model predictions. SHAP values are computed to identify the contribution of each feature, offering an additive decomposition that aids in explaining complex model behavior.
+   - 
+2. **LLM Studio Integration**
+   - Used LLM Studio to expose an API that generates natural language explanations of model predictions. The API utilizes the llama-3.2-1b-instruct model, fine-tuned for instruction-following tasks, to convert numeric SHAP values into coherent textual summaries that are understandable by non-experts.
 
+3. **VSCode API Integration**
+   - The generated API is integrated into VSCode, to access natural language explanations directly from the development environment.
+   - 
+ ## Example output
 
+Natural Language Explanation for Instance 0:
+- gender_binary: -0.1466 contribution
+- marital_status_Now_married: -0.1419 contribution
+- relationship_Married-civil_spouse: -0.1445 contribution
+- hours_per_week_Weekly_Sales_employees: -0.1348 contribution
+- age_cohort: 0.1264 contribution
+- marital_status_Now_married: 0.1113 contribution
+- relationship_Own-child: -0.1051 contribution
+- gender_binary: -0.0846 contribution
+- hours_per_week_Monthly_Sales_employees: -0.0799 contribution
+- age_cohort: 0.0748 contribution
+- marital_status_Never-married: -0.0644 contribution
+- relationship_Married-civil_spouse: -0.0615 contribution
+- gender_binary: -0.0571 contribution
+- hours_per_week_Weekly_Sales_employees: -0.0559 contribution
+- age_cohort: 0.0533 contribution
+- marital_status_Now_married: -0.0467 contribution
+- relationship_Own-child: -0.0445 contribution
+- gender_binary: -0.0386 contribution
+- hours_per_week_Monthly_Sales_employees: -0.0349 contribution
+- age_cohort: 0.0313 contribution
+
+The most important features are the ones that have a significant negative coefficient on the predicted target variable (-1.2567, -0.7523, and -0.3511). These feature values indicate that the model predicts higher marital status (e.g., Married-civ-spouse) or lower relationship status (e.g., Own-child) for this instance compared to what is observed in the data.
+
+The features with significant positive coefficients (-0.2641, -0.1466, and -0.0846) indicate that the model predicts a higher marital status or relationship status (e.g., Now_married) for this instance compared to the observed values.
+
+The feature hours_per_week has a moderate effect on the prediction (0.3354), indicating that as the number of hours worked per week increases, the predicted marital status is more likely to be Married-civ-spouse.
+ 
 ## Dependencies
 - Python 3.x
 - pandas
