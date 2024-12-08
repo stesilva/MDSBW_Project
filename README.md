@@ -156,7 +156,7 @@ python classifier.py
 - Accuracy: ~0.82
 - Significant disparity between classes holds:
   - Class 0 (≤50K): Precision: 0.95, Recall: 0.81
-  - Class 1 (>50K): 0.59, Recall: 0.87
+  - Class 1 (>50K): 0.60, Recall: 0.87
 
 ### Local Differential Privacy Metrics
    - In both randomised response techniques for Age and Sex, 0.90 probability of preserving the truth was introduced, i.e. p=q=0.90 (with epsilon ~2).
