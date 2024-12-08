@@ -160,7 +160,7 @@ python classifier.py
 
 ### Local Differential Privacy Metrics
    - In both randomised response techniques for Age and Sex, 0.90 probability of preserving the truth was introduced, i.e. p=q=0.90 (with epsilon ~2).
-   - This value was chosen based on the analysis of relative errors for each attribute (not exceeding 10%) and the proximity of absolute values in cross-tabulation. We preserve the informational value of the data, at the same time guaranteeing pretty high privacy with the value of epsilon being around 2.
+   - This value was chosen based on the analysis of relative errors for each attribute (not exceeding 10%) and the proximity of absolute values in cross-tabulation. We preserve the informational value of the data, at the same time guaranteeing moderate privacy with the value of epsilon being around 2.
 
 ### Model Performance
 - As a result, the accuracy was not much affected (0.82 compared to 0.83 in the original classifier).
