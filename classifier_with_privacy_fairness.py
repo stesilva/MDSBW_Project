@@ -171,6 +171,7 @@ class AdultClassificationPipeline:
         
         # 4. Categorical encoding
         df_categorical = pd.get_dummies(df[categorical_features])
+        df_categorical=df_categorical.drop(columns='sex_Female')
         
         # 5. Combine features
         features = pd.concat([
