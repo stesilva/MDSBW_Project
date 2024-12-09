@@ -140,10 +140,10 @@ python classifier.py
 ### Fairness Metrics
    - Disparate Impact -> Measures the relative rate of positive outcomes between privileged and unprivileged groups. A value close to 1 indicates fairness
       - Before Adversarial Debiasing: 0.35, indicating significant bias against the unprivileged group
-      - After Adversarial Debiasing: 0.99, demonstrating a much more balanced outcome and improved fairness
+      - After Adversarial Debiasing: 0.8, demonstrating a much more balanced outcome and improved fairness
    - Statistical Parity Difference -> Measures the absolute difference in probabilities of receiving a positive outcome between privileged and unprivileged groups. A value close to 0 indicates fairness
       - Before Adversarial Debiasing: -0.40, suggesting a strong imbalance in outcomes between the groups
-      - After Adversarial Debiasing: -0.001, showing a minimal disparity and a significantly fairer model.
+      - After Adversarial Debiasing: -0.038, showing a minimal disparity and a significantly fairer model.
 
 ### Identified Issues
 1. **Class Imbalance**
