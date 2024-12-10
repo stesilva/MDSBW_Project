@@ -522,6 +522,7 @@ def main():
     print("\n Private dataset cross-tab")
     print(cross_tab_private)
 
+    print("\nHow much the values changed with the addition of privacy")
     print("\nOriginal age=1: " + str(np.sum(processed_dataset['age_binary'].apply(lambda x: 1 if x == 1 else 0).values)))
     print("Private age=1: " + str(np.sum(private_dataset['age_binary'].apply(lambda x: 1 if x == 1 else 0).values)))
 
